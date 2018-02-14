@@ -1,0 +1,44 @@
+sudo: false
+dist: trusty
+language: groovy
+addons:
+  chrome: stable
+jdk: oraclejdk8
+env:
+  - ELASTICSEARCH_VERSION=5.6.2 KIBANA_VERSION=5.6.2
+
+install:
+  - mkdir /tmp/elasticsearch-server
+  - wget --directory-prefix=/tmp/elasticsearch-server https://artifacts.elastic.co/downloads/elasticsearch/elasticsearch-${ELASTICSEARCH_VERSION}.tar.gz
+  - tar -xzf /tmp/elasticsearch-server/elasticsearch-${ELASTICSEARCH_VERSION}.tar.gz --directory /tmp/elasticsearch-server
+  - /tmp/elasticsearch-server/elasticsearch-${ELASTICSEARCH_VERSION}/bin/elasticsearch &
+  - mkdir /tmp/kibana-server
+  - wget --directory-prefix=/tmp/kibana-server https://artifacts.elastic.co/downloads/kibana/kibana-${KIBANA_VERSION}-linux-x86_64.tar.gz
+  - tar -xzf /tmp/kibana-server/kibana-${KIBANA_VERSION}-linux-x86_64.tar.gz --directory /tmp/kibana-server
+  - /tmp/kibana-server/kibana-${KIBANA_VERSION}-linux-x86_64/bin/kibana &
+  - wget --directory-prefix=/tmp https://chromedriver.storage.googleapis.com/2.35/chromedriver_linux64.zip
+  - unzip -d /tmp/chromedriver /tmp/chromedriver_linux64.zip
+  - export PATH=$PATH:/tmp/chromedriver
+  - git clone https://github.com/stagemonitor/stagemonitor.git
+  - git clone https://github.com/stagemonitor/spring-petclinic.git
+  - ./gradlew prepareTest
+  - pushd stagemonitor
+  - ./gradlew install
+  - popd
+  - pushd spring-petclinic
+  - ./mvnw spring-boot:run&
+  - popd
+
+before_script:
+  - "export DISPLAY=:99.0"
+  - "sh -e /etc/init.d/xvfb start"
+  - sleep 60 # wait for elastic / kibana / petclinic / xvfb
+
+script:
+  - echo running tests....
+  - ./gradlew test --info --stacktrace
+
+cache:
+  directories:
+  - $HOME/.m2
+  - $HOME/.gradle
