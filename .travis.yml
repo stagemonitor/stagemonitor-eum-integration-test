@@ -5,27 +5,35 @@ addons:
   chrome: stable
 jdk: oraclejdk8
 env:
-  - ELASTICSEARCH_VERSION=5.6.2 KIBANA_VERSION=5.6.2
+  - ELASTICSEARCH_VERSION=5.6.2 KIBANA_VERSION=5.6.2 CHROMEDRIVER_VERSION=2.35
 
 install:
+  # install elasticsearch
   - mkdir /tmp/elasticsearch-server
   - wget --directory-prefix=/tmp/elasticsearch-server https://artifacts.elastic.co/downloads/elasticsearch/elasticsearch-${ELASTICSEARCH_VERSION}.tar.gz
   - tar -xzf /tmp/elasticsearch-server/elasticsearch-${ELASTICSEARCH_VERSION}.tar.gz --directory /tmp/elasticsearch-server
   - /tmp/elasticsearch-server/elasticsearch-${ELASTICSEARCH_VERSION}/bin/elasticsearch &
+  # install kibana
   - mkdir /tmp/kibana-server
   - wget --directory-prefix=/tmp/kibana-server https://artifacts.elastic.co/downloads/kibana/kibana-${KIBANA_VERSION}-linux-x86_64.tar.gz
   - tar -xzf /tmp/kibana-server/kibana-${KIBANA_VERSION}-linux-x86_64.tar.gz --directory /tmp/kibana-server
   - /tmp/kibana-server/kibana-${KIBANA_VERSION}-linux-x86_64/bin/kibana &
-  - wget --directory-prefix=/tmp https://chromedriver.storage.googleapis.com/2.35/chromedriver_linux64.zip
+  # install chromedriver for headless tests
+  - wget --directory-prefix=/tmp https://chromedriver.storage.googleapis.com/${CHROMEDRIVER_VERSION}/chromedriver_linux64.zip
   - unzip -d /tmp/chromedriver /tmp/chromedriver_linux64.zip
   - export PATH=$PATH:/tmp/chromedriver
+  # clone and prepare test applications
   - git clone https://github.com/stagemonitor/stagemonitor.git
   - git clone https://github.com/stagemonitor/spring-petclinic.git
   - ./gradlew prepareTest
+  # build stagemonitor for test application
   - pushd stagemonitor
+  - git --no-pager log -n 1 --pretty=oneline
   - ./gradlew install
   - popd
+  # start petclinic for tests
   - pushd spring-petclinic
+  - git --no-pager log -n 1 --pretty=oneline
   - ./mvnw spring-boot:run&
   - popd
 
