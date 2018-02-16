@@ -40,7 +40,7 @@ install:
 before_script:
   - "export DISPLAY=:99.0"
   - "sh -e /etc/init.d/xvfb start"
-  - sleep 60 # wait for elastic / kibana / petclinic / xvfb
+  - sleep 240 # wait for elastic / kibana / petclinic / xvfb
 
 script:
   - echo running tests....
